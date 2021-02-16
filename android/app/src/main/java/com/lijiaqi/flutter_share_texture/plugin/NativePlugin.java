@@ -1,6 +1,7 @@
 package com.lijiaqi.flutter_share_texture.plugin;
 
 import android.graphics.SurfaceTexture;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 
@@ -28,6 +29,7 @@ public class NativePlugin implements FlutterPlugin , MethodChannel.MethodCallHan
 
     @Override
     public void onAttachedToEngine(@NonNull FlutterPluginBinding binding) {
+        Log.i("init ---------", "init");
         channel = new MethodChannel(binding.getBinaryMessenger(), channelName);
         channel.setMethodCallHandler(this);
         textureRegistry = binding.getTextureRegistry();
@@ -42,9 +44,10 @@ public class NativePlugin implements FlutterPlugin , MethodChannel.MethodCallHan
 
     @Override
     public void onMethodCall(@NonNull MethodCall call, @NonNull MethodChannel.Result result) {
+        Log.i("call", "----------");
         Map<String,Integer> args =(Map<String,Integer>) call.arguments;
         switch (call.method) {
-            case "create" -> {
+            case "create" :
                 int width = args.get("width");
                 int height = args.get("height");
                 surfaceTextureEntry = textureRegistry.createSurfaceTexture();
@@ -53,11 +56,11 @@ public class NativePlugin implements FlutterPlugin , MethodChannel.MethodCallHan
                 eglThread = new EGLThread(surfaceTexture, new SimpleRenderer());
                 eglThread.start();
                 result.success(surfaceTextureEntry.id());
-            }
-            case "dispose" -> {
+                break;
+            case "dispose" :
                 eglThread.dispose();
                 surfaceTextureEntry.release();
-            }
+                break;
         }
 
     }

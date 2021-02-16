@@ -44,7 +44,7 @@ class FirstStepPageState extends State<FirstStepPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           nativePlugin.isInitialized ?
-          Texture(textureId: nativePlugin.textureId)
+          Container(width: 300,height: 300,child: Texture(textureId: nativePlugin.textureId),)
               :Container(width: 400,height: 400,color: Colors.red,)
         ],
       ),

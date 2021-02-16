@@ -125,7 +125,7 @@ class EGLThread implements Runnable{
 
     private EGLContext createContext(EGL10 egl10,EGLDisplay eglDisplay,EGLConfig eglConfig){
         int[] attributeList = new int[]{EGL14.EGL_CONTEXT_CLIENT_VERSION, 2, EGL10.EGL_NONE};
-        return egl10.eglCreateContext(eglDisplay, eglConfig, eglContext, attributeList);
+        return egl10.eglCreateContext(eglDisplay, eglConfig, EGL10.EGL_NO_CONTEXT, attributeList);
     }
 
 
