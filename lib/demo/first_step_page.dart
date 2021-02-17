@@ -2,7 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_share_texture/demo/native_plugin.dart';
-
+///通过openGL 实现纹理共享
+///
 class FirstStepPage extends StatefulWidget{
   @override
   State<StatefulWidget> createState() {

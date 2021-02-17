@@ -5,7 +5,7 @@
 import 'package:flutter/services.dart';
 
 class NativePlugin{
-  final MethodChannel channel = MethodChannel('egl_plugin_alpha');
+  static const MethodChannel channel = const MethodChannel('egl_plugin_alpha');
 
   int textureId;
 
@@ -19,6 +19,16 @@ class NativePlugin{
   }
 
   Future dispose() => channel.invokeMethod('dispose',{'textureId':textureId});
+
+
+  ///list view
+  /// * fetch texture for list view's item;
+  static Future<int> fetchTexture(int width,int height,int itemId)async{
+    final textureId = await channel.invokeMethod('fetch',{
+      'width':width,'height':height,'id':itemId
+    });
+    return textureId;
+  }
 
 }
 
