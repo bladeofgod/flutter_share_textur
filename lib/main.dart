@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_share_texture/demo/first_step_page.dart';
 
+import 'demo/list_view_page.dart';
+
 void main() {
   runApp(MyApp());
 }
@@ -27,7 +29,7 @@ class MyApp extends StatelessWidget {
         // closer together (more dense) than on mobile platforms.
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: FirstStepPage(),
+      home: ListViewPage(),
     );
   }
 }

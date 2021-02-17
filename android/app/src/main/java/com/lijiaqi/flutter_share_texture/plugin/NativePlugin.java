@@ -12,7 +12,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.request.transition.Transition;
 import com.lijiaqi.flutter_share_texture.ConstantData;
 
@@ -29,11 +33,12 @@ import io.flutter.view.TextureRegistry;
  * @date 2021/2/16
  * Description:
  */
-public class NativePlugin implements FlutterPlugin , MethodChannel.MethodCallHandler {
+public class NativePlugin implements FlutterPlugin, MethodChannel.MethodCallHandler {
 
     static private final String channelName = "egl_plugin_alpha";
 
     final Activity activity;
+
     public NativePlugin(Activity activity) {
         this.activity = activity;
     }
@@ -44,11 +49,8 @@ public class NativePlugin implements FlutterPlugin , MethodChannel.MethodCallHan
     private EGLThread eglThread;
 
 
-
-
     @Override
     public void onAttachedToEngine(@NonNull FlutterPluginBinding binding) {
-        Log.i("init ---------", "init");
         channel = new MethodChannel(binding.getBinaryMessenger(), channelName);
         channel.setMethodCallHandler(this);
         textureRegistry = binding.getTextureRegistry();
@@ -62,14 +64,14 @@ public class NativePlugin implements FlutterPlugin , MethodChannel.MethodCallHan
     }
 
 
-    Map<Integer,CustomSimpleTarget> targetBucket = new HashMap<>();
+    //Map<Integer,CustomSimpleTarget> targetBucket = new HashMap<>();
 
     @Override
     public void onMethodCall(@NonNull MethodCall call, @NonNull MethodChannel.Result result) {
         Log.i("call", "----------");
-        Map<String,Integer> args =(Map<String,Integer>) call.arguments;
+        Map<String, Integer> args = (Map<String, Integer>) call.arguments;
         switch (call.method) {
-            case "create" :
+            case "create":
                 int width = args.get("width");
                 int height = args.get("height");
                 surfaceTextureEntry = textureRegistry.createSurfaceTexture();
@@ -79,7 +81,7 @@ public class NativePlugin implements FlutterPlugin , MethodChannel.MethodCallHan
                 eglThread.start();
                 result.success(surfaceTextureEntry.id());
                 break;
-            case "dispose" :
+            case "dispose":
                 eglThread.dispose();
                 surfaceTextureEntry.release();
                 break;
@@ -87,51 +89,97 @@ public class NativePlugin implements FlutterPlugin , MethodChannel.MethodCallHan
                 int itemWidth = args.get("width");
                 int itemHeight = args.get("height");
                 int itemId = args.get("id");
-                final CustomSimpleTarget simpleTarget = new CustomSimpleTarget<Bitmap>(itemId,result);
-                targetBucket.put(itemId, simpleTarget);
-                Glide.with(activity.getApplicationContext())
-                        .asBitmap()
-                        .load(ConstantData.imageList.get(itemId))
-                        .into(simpleTarget);
+                Log.i("demo---------", "" + itemId);
+                fetchImg(ConstantData.imageList.get(itemId), result);
+                //final CustomSimpleTarget simpleTarget = new CustomSimpleTarget<Bitmap>(itemId,result);
+                //targetBucket.put(itemId, simpleTarget);
+
                 break;
         }
 
     }
 
-    class CustomSimpleTarget<T> extends  SimpleTarget<T>{
-        final MethodChannel.Result result;
-        final int itemId;
+    private void fetchImg(String url,MethodChannel.Result result) {
+        Glide.with(activity.getApplicationContext())
+                .asBitmap()
+                .listener(new RequestListener<Bitmap>() {
+                    @Override
+                    public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Bitmap> target, boolean isFirstResource) {
+                        activity.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                result.error("-1", "fetch error", "...");
+                            }
+                        });
+                        return false;
+                    }
 
-        CustomSimpleTarget(int itemId,MethodChannel.Result result) {
-            this.result = result;
-            this.itemId = itemId;
-        }
+                    @Override
+                    public boolean onResourceReady(Bitmap bitmap, Object model, Target<Bitmap> target, DataSource dataSource, boolean isFirstResource) {
 
-        @Override
-        public void onResourceReady(@NonNull T resource, @Nullable Transition<? super T> transition) {
+                        final int bmWidth = bitmap.getWidth();
+                        final int bmHeight = bitmap.getHeight();
+                        final Rect rect = new Rect(0, 0, bmWidth, bmHeight);
+                        final Map<String,Object> map = new HashMap<>();
+                        map.put("bmW", bmWidth);
+                        map.put("bmH", bmHeight);
 
-            final Bitmap bitmap = (Bitmap) resource;
-            final Rect rect = new Rect(0,0,bitmap.getWidth(),bitmap.getHeight());
-
-            TextureRegistry.SurfaceTextureEntry entry = textureRegistry.createSurfaceTexture();
-            long textureId = entry.id();
-            SurfaceTexture surfaceTexture = entry.surfaceTexture();
-            Surface surface = new Surface(surfaceTexture);
-            Canvas canvas = surface.lockCanvas(rect);
-            canvas.drawBitmap(bitmap, null,rect,null);
-            surface.unlockCanvasAndPost(canvas);
-            activity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    result.success(textureId);
-                    Glide.with(activity).clear(targetBucket.get(itemId));
-                    targetBucket.remove(itemId);
-                }
-            });
-
-        }
+                        TextureRegistry.SurfaceTextureEntry entry = textureRegistry.createSurfaceTexture();
+                        long textureId = entry.id();
+                        map.put("textureId", textureId);
+                        SurfaceTexture surfaceTexture = entry.surfaceTexture();
+                        Surface surface = new Surface(surfaceTexture);
+                        Canvas canvas = surface.lockCanvas(rect);
+                        canvas.drawBitmap(bitmap, null, rect, null);
+                        surface.unlockCanvasAndPost(canvas);
+                        activity.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                result.success(map);
+                                //Glide.with(activity).clear(targetBucket.get(itemId));
+                                //targetBucket.remove(itemId);
+                            }
+                        });
+                        return false;
+                    }
+                }).submit();
 
     }
+
+//    class CustomSimpleTarget<T> extends  SimpleTarget<T>{
+//        final MethodChannel.Result result;
+//        final int itemId;
+//
+//        CustomSimpleTarget(int itemId,MethodChannel.Result result) {
+//            this.result = result;
+//            this.itemId = itemId;
+//        }
+//
+//        @Override
+//        public void onResourceReady(@NonNull T resource, @Nullable Transition<? super T> transition) {
+//
+//            final Bitmap bitmap = (Bitmap) resource;
+//            final Rect rect = new Rect(0,0,bitmap.getWidth(),bitmap.getHeight());
+//
+//            TextureRegistry.SurfaceTextureEntry entry = textureRegistry.createSurfaceTexture();
+//            long textureId = entry.id();
+//            SurfaceTexture surfaceTexture = entry.surfaceTexture();
+//            Surface surface = new Surface(surfaceTexture);
+//            Canvas canvas = surface.lockCanvas(rect);
+//            canvas.drawBitmap(bitmap, null,rect,null);
+//            surface.unlockCanvasAndPost(canvas);
+//            activity.runOnUiThread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    result.success(textureId);
+//                    //Glide.with(activity).clear(targetBucket.get(itemId));
+//                    targetBucket.remove(itemId);
+//                }
+//            });
+//
+//        }
+//
+//    }
 
 
 }

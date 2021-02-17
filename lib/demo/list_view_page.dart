@@ -62,7 +62,7 @@ class ShareTextureItemState extends State<ShareTextureItem> {
 
     return Container(
       color: Colors.lightBlueAccent,
-      width: widget.width,height: widget.height/3,
+      width: widget.width,height: widget.height,
       margin: EdgeInsets.only(bottom: 20),
       alignment: Alignment.center,
       child: textureId == null ?
