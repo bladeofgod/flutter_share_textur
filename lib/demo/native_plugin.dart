@@ -23,11 +23,10 @@ class NativePlugin{
 
   ///list view
   /// * fetch texture for list view's item;
-  static Future<int> fetchTexture(int width,int height,int itemId)async{
-    final textureId = await channel.invokeMethod('fetch',{
+  static Future<Map<dynamic,dynamic>> fetchTexture(int width,int height,int itemId)async{
+    return await channel.invokeMethod('fetch',{
       'width':width,'height':height,'id':itemId
     });
-    return textureId;
   }
 
 }

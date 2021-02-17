@@ -3,6 +3,7 @@ package com.lijiaqi.flutter_share_texture.plugin;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.util.Log;
@@ -90,7 +91,9 @@ public class NativePlugin implements FlutterPlugin, MethodChannel.MethodCallHand
                 int itemHeight = args.get("height");
                 int itemId = args.get("id");
                 Log.i("demo---------", "" + itemId);
-                fetchImg(ConstantData.imageList.get(itemId), result);
+
+                TextureRegistry.SurfaceTextureEntry entry = textureRegistry.createSurfaceTexture();
+                fetchImg(ConstantData.imageList.get(itemId), result,entry);
                 //final CustomSimpleTarget simpleTarget = new CustomSimpleTarget<Bitmap>(itemId,result);
                 //targetBucket.put(itemId, simpleTarget);
 
@@ -99,9 +102,10 @@ public class NativePlugin implements FlutterPlugin, MethodChannel.MethodCallHand
 
     }
 
-    private void fetchImg(String url,MethodChannel.Result result) {
-        Glide.with(activity.getApplicationContext())
+    private void fetchImg(String url,MethodChannel.Result result,TextureRegistry.SurfaceTextureEntry entry) {
+        Glide.with(activity)
                 .asBitmap()
+                .load(url)
                 .listener(new RequestListener<Bitmap>() {
                     @Override
                     public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Bitmap> target, boolean isFirstResource) {
@@ -115,16 +119,17 @@ public class NativePlugin implements FlutterPlugin, MethodChannel.MethodCallHand
                     }
 
                     @Override
-                    public boolean onResourceReady(Bitmap bitmap, Object model, Target<Bitmap> target, DataSource dataSource, boolean isFirstResource) {
-
+                    public boolean onResourceReady(Bitmap origin, Object model, Target<Bitmap> target, DataSource dataSource, boolean isFirstResource) {
+                        final Bitmap bitmap = scaleBitmap(origin, (float) 0.5);
                         final int bmWidth = bitmap.getWidth();
                         final int bmHeight = bitmap.getHeight();
+                        Log.i("bitmap-----", bmWidth + "-----" + bmHeight);
                         final Rect rect = new Rect(0, 0, bmWidth, bmHeight);
                         final Map<String,Object> map = new HashMap<>();
                         map.put("bmW", bmWidth);
                         map.put("bmH", bmHeight);
 
-                        TextureRegistry.SurfaceTextureEntry entry = textureRegistry.createSurfaceTexture();
+
                         long textureId = entry.id();
                         map.put("textureId", textureId);
                         SurfaceTexture surfaceTexture = entry.surfaceTexture();
@@ -132,18 +137,33 @@ public class NativePlugin implements FlutterPlugin, MethodChannel.MethodCallHand
                         Canvas canvas = surface.lockCanvas(rect);
                         canvas.drawBitmap(bitmap, null, rect, null);
                         surface.unlockCanvasAndPost(canvas);
-                        activity.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                result.success(map);
-                                //Glide.with(activity).clear(targetBucket.get(itemId));
-                                //targetBucket.remove(itemId);
-                            }
-                        });
+                        if(activity != null){
+                            activity.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    result.success(map);
+                                    //Glide.with(activity).clear(targetBucket.get(itemId));
+                                    //targetBucket.remove(itemId);
+                                }
+                            });
+
+                        }
+                        surface.release();
+
                         return false;
                     }
                 }).submit();
 
+    }
+
+    private Bitmap scaleBitmap(Bitmap origin,float ratio) {
+        int width = origin.getWidth();
+        int height = origin.getHeight();
+        Matrix matrix = new Matrix();
+        matrix.preScale(ratio, ratio);
+        Bitmap newBm = Bitmap.createBitmap(origin,0,0,width,height,matrix,false);
+        origin.recycle();
+        return newBm;
     }
 
 //    class CustomSimpleTarget<T> extends  SimpleTarget<T>{

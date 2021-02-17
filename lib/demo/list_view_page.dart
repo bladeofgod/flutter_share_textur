@@ -17,7 +17,7 @@ class ListViewPageState extends State<ListViewPage> {
     return Material(
       color: Colors.white,
       child: ListView(
-        children: List.generate(20, (index) => ShareTextureItem(id: index,width: size.width,height: size.height/3,) ),
+        children: List.generate(10, (index) => ShareTextureItem(id: index,width: size.width,height: size.height/3,) ),
       ),
     );
   }
@@ -42,6 +42,7 @@ class ShareTextureItem extends StatefulWidget{
 class ShareTextureItemState extends State<ShareTextureItem> {
 
   int textureId;
+  int bmW,bmH;
 
   @override
   void initState() {
@@ -51,7 +52,10 @@ class ShareTextureItemState extends State<ShareTextureItem> {
   }
 
   void loadImg()async{
-    textureId = await NativePlugin.fetchTexture(widget.width.floor(),widget.height.floor(),widget.id);
+    final map = await NativePlugin.fetchTexture(widget.width.floor(),widget.height.floor(),widget.id);
+    textureId = map["textureId"];
+    bmW = map['bmW'];
+    bmH = map['bmH'];
     setState(() {
 
     });
@@ -66,7 +70,7 @@ class ShareTextureItemState extends State<ShareTextureItem> {
       margin: EdgeInsets.only(bottom: 20),
       alignment: Alignment.center,
       child: textureId == null ?
-              Text('加载中') : Texture(textureId: textureId,),
+              Text('加载中') :AspectRatio(aspectRatio: bmW/bmH,child:  Texture(textureId: textureId,),),
     );
   }
 }

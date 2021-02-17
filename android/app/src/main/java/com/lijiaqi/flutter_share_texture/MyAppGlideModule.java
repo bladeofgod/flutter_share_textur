@@ -14,17 +14,17 @@ import com.bumptech.glide.module.AppGlideModule;
  * @date 2021/2/17
  * Description:
  */
-//@GlideModule
-//class MyAppGlideModule extends AppGlideModule {
-//
-//    @Override
-//    public void applyOptions(@NonNull Context context, @NonNull GlideBuilder builder) {
-//        super.applyOptions(context, builder);
-//        builder.setDiskCache(new DiskLruCacheFactory(context.getExternalCacheDir().getAbsolutePath(),240*1024*1024));
-//    }
-//
-//    @Override
-//    public boolean isManifestParsingEnabled() {
-//        return false;
-//    }
-//}
+@GlideModule
+class MyAppGlideModule extends AppGlideModule {
+
+    @Override
+    public void applyOptions(@NonNull Context context, @NonNull GlideBuilder builder) {
+        super.applyOptions(context, builder);
+        builder.setDiskCache(new DiskLruCacheFactory(context.getExternalCacheDir().getAbsolutePath(),240*1024*1024));
+    }
+
+    @Override
+    public boolean isManifestParsingEnabled() {
+        return false;
+    }
+}
