@@ -162,7 +162,7 @@ public class NativePlugin implements FlutterPlugin, MethodChannel.MethodCallHand
         Matrix matrix = new Matrix();
         matrix.preScale(ratio, ratio);
         Bitmap newBm = Bitmap.createBitmap(origin,0,0,width,height,matrix,false);
-        origin.recycle();
+        //origin.recycle();
         return newBm;
     }
 

@@ -15,7 +15,7 @@ import com.bumptech.glide.module.AppGlideModule;
  * Description:
  */
 @GlideModule
-class MyAppGlideModule extends AppGlideModule {
+public class MyAppGlideModule extends AppGlideModule {
 
     @Override
     public void applyOptions(@NonNull Context context, @NonNull GlideBuilder builder) {
